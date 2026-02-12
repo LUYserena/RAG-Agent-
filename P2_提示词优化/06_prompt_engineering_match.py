@@ -1,0 +1,49 @@
+from openai import OpenAI
+import os
+import json
+#1.获取client对象
+
+client = OpenAI(
+    api_key=os.getenv("OPENAI_API_KEY"),
+    base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
+)
+
+examples_data = {
+    "是": [
+        ("公司ABC发布了季度财报，显示盈亏增长。", "财报披露，公司ABC利润上涨。"),
+        ("公司ITCAST发布了年度财报，显示利润大幅度增长。", "财报披露，公司ITCAST更赚钱了。")
+    ],
+    "不是": [
+        ("黄金价格下跌，投资者抛售。", "外汇市场交易额新增。"),
+        ("央行降息，刺激经济增长。", "新能源技术的创新。")
+    ]
+}
+
+questions = [
+    ("利率上升，影响房地产市场。", "高利率对房地产有一定的冲击。"),
+    ("油价大幅度下跌，能源公司面临价格战。", "未来智能城市的建设趋势将加强。"),
+    ("股票市场今天大涨，投资者乐观。", "持续上涨的市场让投资者感到满意。")
+]
+
+
+# System message template for classification task
+
+
+messages = [
+    {"role": "system", "content": f"你帮我完成文本匹配，我给你2个句子，被[]包围，你判断它们是否匹配，回答是或不是，请参考如下示例："}
+]
+
+for key, value in examples_data.items():
+    for t in value:
+        messages.append({"role": "user", "content": f"句子1：[{t[0]}]，句子2：[{t[1]}]"})
+        messages.append({"role": "assistant", "content": key})
+        
+# for x in messages:
+#     print(x)    
+
+for question in questions:
+    response = client.chat.completions.create(
+        model="qwen3-max",
+        messages=messages + [{"role": "user", "content": f"句子1：[{question[0]}]，句子2：[{question[1]}]"}]
+    )
+    print(response.choices[0].message.content)
